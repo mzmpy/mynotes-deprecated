@@ -1,5 +1,7 @@
 <template>
-  <div ref="monacoEditor"></div>
+  <div>
+    <div ref="monacoEditor" :style="[innerStyle, { textAlign: 'left', overflow: 'hidden' }]"></div>
+  </div>
 </template>
 
 <script>
@@ -8,10 +10,31 @@
   export default {
     name: 'MonacoEditor',
 
+    emits: ['codeChanged'],
+
     data() {
       return {
-        editor: null,
+        changed: false,
+        innerStyle: {
+          width: '100%',
+          height: '100%',
+        },
+        code: '',
       };
+    },
+
+    methods: {
+      getCode() {
+        return this.editor.getValue();
+      }
+    },
+
+    watch: {
+      code(val, oldVal) {
+        if(val !== oldVal) {
+          this.$emit('codeChanged', val);
+        }
+      },
     },
 
     mounted() {
@@ -19,7 +42,11 @@
         value: '',
         theme: 'vs-dark',
         automaticLayout: true,
-        language: 'javascript'
+        language: 'maekdown',
+      });
+
+      this.editor.onDidChangeModelContent(() => {
+        this.code = this.getCode();
       });
     },
   };

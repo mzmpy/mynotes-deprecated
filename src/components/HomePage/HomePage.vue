@@ -25,7 +25,15 @@
          </a-layout-sider>
         <a-layout-content :style="{ height: '100%', overflow: 'auto', marginLeft: '10px' }">
           <div :style="{ overflow: 'auto', height: '100%', background: '#fff' }">
-            <monaco-editor :style="{ height: '95%', textAlign: 'left', margin: '15px' }"></monaco-editor>
+            <div
+             :style="{ width: '100%', height: '50%', overflow: 'hidden', padding: '15px 15px 0 15px' }">
+              <div
+              class="markdown-body"
+               ref="markdown"
+               :style="{ width: '100%', height: '100%', border: '1px solid black', overflow: 'auto', background: '#fff', textAlign: 'left', padding: '15px' }">
+              </div>
+            </div>
+            <monaco-editor :style="{ height: '50%', padding: '15px' }" @codeChanged="onCodeChanged"></monaco-editor>
           </div>
         </a-layout-content>
       </a-layout>
@@ -41,6 +49,10 @@
 <script>
   import { defineComponent, ref } from 'vue';
   import MonacoEditor from '../editor/editor';
+  import hljs from 'highlight.js';
+  import 'highlight.js/styles/github.css';
+  import marked from 'marked';
+  import 'github-markdown-css/github-markdown.css';
 
   export default defineComponent({
     data() {
@@ -81,10 +93,12 @@
         this.footer.display = 'block';
         this.divDisplay.display = 'none';
       },
+
       footerHlr() {
         this.footer.display = 'none';
         this.divDisplay.display = 'block';
       },
+
       onMouseMove(moveEvent) {
         new Promise((resolve) => {
           resolve(moveEvent.clientX);
@@ -95,15 +109,44 @@
           console.log(err);
         });
       },
+
       onMouseUp() {
         document.removeEventListener('mousemove', this.onMouseMove);
         document.removeEventListener('mouseup', this.onMouseUp);
       },
+
       changeSiderWidth(downEvent) {
         this.dragStartX = downEvent.clientX;
 
         document.addEventListener('mousemove', this.onMouseMove);
         document.addEventListener('mouseup', this.onMouseUp);
+      },
+
+      markIt(val) {
+        marked.setOptions({
+          renderer: new marked.Renderer(),
+          highlight: function(code, lang) {
+            const language = hljs.getLanguage(lang) ? lang : 'python';
+            return hljs.highlight(code, { language }).value;
+          },
+          langPrefix: 'hljs language-',
+          pedantic: false,
+          gfm: true,
+          breaks: false,
+          sanitize: false,
+          smartLists: true,
+          smartypants: false,
+          xhtml: false
+        });
+
+        this.$refs.markdown.innerHTML = marked(val);
+        /* document.querySelectorAll('pre code').forEach((el) => {
+          hljs.highlightElement(el);
+        }); */
+      },
+
+      onCodeChanged(val) {
+        this.markIt(val);
       },
     },
   });
@@ -136,4 +179,5 @@
     background: linear-gradient(to right, rgb(211, 211, 211), #ffffff);
     cursor: e-resize;
   }
+
 </style>
